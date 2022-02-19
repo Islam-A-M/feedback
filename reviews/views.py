@@ -1,9 +1,10 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from .forms import ReviewForm
+from .forms import ReviewForm,ReviewFormViewOnly
 from .models import Review
 from django.views import View
+from django.views.generic.base import TemplateView
 # Create your views here.
 class ReviewView(View):
     def get(self, request):
@@ -53,10 +54,39 @@ class ReviewView(View):
 #         "form":form
 #     })
 
-class ThankyouView(View):
-   def get(self, request, username):
-     return render(request, "reviews/thank_you.html", 
-                  {"username":username})
+class ThankyouView(TemplateView):
+    template_name = "reviews/thank_you.html"
+    def get_context_data(self, **kwargs) :
+        return super().get_context_data(**kwargs)
+
+class ReviewsListView(TemplateView):
+    template_name = "reviews/review_list.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        reviews = Review.objects.all()
+        context['reviews']= reviews
+        
+        return context
+    
+class ReviewView(TemplateView):
+     template_name = "reviews/review_detail.html"
+
+     def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        review = Review.objects.get(pk=context['id'])
+
+        form = ReviewFormViewOnly(initial={'user_name':review.user_name ,
+                                           'review_text':review.review_text,
+                                           'rating':review.rating })
+
+        context['form']= form
+        
+        return context
+# class ThankyouView(View):
+#    def get(self, request, username):
+#      return render(request, "reviews/thank_you.html", 
+#                   {"username":username})
 
 # def thank_you(request,username):
 #     return render(request, "reviews/thank_you.html", 
